@@ -1,0 +1,102 @@
+/* Global */
+body {
+    font-family: 'Times New Roman', Times, serif;
+    background: #eef2ff;
+    padding: 30px;
+    text-align: center;
+}
+
+h1 {
+    color: #1e3a8a;
+}
+
+.box {
+    display: none;
+    background: white;
+    padding: 30px 40px;
+    border-radius: 20px;
+    max-width: 600px;
+    margin: 40px auto;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    text-align: left;
+}
+
+label {
+    display: block;
+    margin-top: 12px;
+    font-weight: bold;
+}
+
+input, select {
+    width: 100%;
+    padding: 10px 12px;
+    margin-top: 5px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+    box-sizing: border-box;
+}
+
+/* 🔥 BUTTON STYLES */
+button {
+    padding: 12px 30px;
+    background: #28a745;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: 0.3s;
+}
+
+button:hover {
+    background: #218838;
+}
+
+/* 🔥 Back left & Next right */
+.button-row {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 25px;
+}
+
+/* Result */
+.result {
+    margin-top: 20px;
+    font-size: 16px;
+    font-weight: bold;
+    text-align: center;
+}
+
+p.disclaimer {
+    margin-top:10px;
+    font-size:12px;
+    color:gray;
+}
+
+/* Start box */
+#startBox {
+    display: block;
+    text-align: center;
+}
+
+#startBox p {
+    font-size: 18px;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+/* Canvas centered */
+canvas {
+    margin-top: 20px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Input focus */
+input:focus, select:focus {
+    border-color: #28a745;
+    outline: none;
+    box-shadow: 0 0 5px #28a74533;
+}
