@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TESLA</title>
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        body {
+            background-image: url("image.jpg");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
+
+        .box { display: none; }
+        #startBox { display: flex; flex-direction: column; justify-content: center; align-items: center; }
+
+        /* ===== UPDATED FUEL TABLE LAYOUT ===== */
+        .fuelHeader, .fuelRow{
+            display:grid;
+            grid-template-columns: 1.5fr 2fr 2fr auto;
+            gap:14px;
+            align-items:center;
+            margin-top:12px;
+        }
+
+        #fuelBox input,
+        #fuelBox select {
+            padding: 14px;
+            font-size: 16px;
+            border-radius: 10px;
+        }
+
+        .fuelRow button {
+            padding: 12px 18px;
+            font-size: 14px;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>Family Energy & Carbon Calculator</h1>
+
+<!-- START -->
+<div class="box" id="startBox">
+    <p>Small acts, when multiplied by millions of people, can transform the world.</p>
+    <button onclick="showSection('electricityBox')">Start Calculation</button>
+</div>
+
+<!-- ELECTRICITY -->
+<div class="box" id="electricityBox">
+    <h2>Electricity Usage</h2>
+
+    <label>Number of Family Members</label>
+    <input type="number" id="members">
+
+    <label>Number of Fans</label>
+    <input type="number" id="fans">
+
+    <label>LED Lights</label>
+    <input type="number" id="led">
+
+    <label>Non-LED Lights</label>
+    <input type="number" id="nonled">
+
+    <label>Refrigerator Runtime (hrs/day)</label>
+    <input type="number" id="fridge">
+
+    <label>AC Runtime (hrs/day)</label>
+    <input type="number" id="ac">
+
+    <label>TV Runtime (hrs/day)</label>
+    <input type="number" id="tv">
+
+    <label>Washing Machine Usage (hrs/day)</label>
+    <input type="number" id="wm">
+
+    <label>Heater Usage (hrs/day)</label>
+    <input type="number" id="heater">
+
+    <label>EV Charging Electricity (kWh/day)</label>
+    <input type="number" id="evPower">
+
+    <button onclick="showSection('startBox')">Back</button>
+    <button onclick="calculateElectricity(); showSection('fuelBox')">Next</button>
+</div>
+
+<!-- ================= FUEL (FIXED) ================= -->
+<div class="box" id="fuelBox">
+    <h2>Fuel Consumption</h2>
+
+    <label>Select Vehicle Category</label>
+    <select id="vehicleType">
+        <option value="">-- Select --</option>
+        <option value="bike">Bike</option>
+        <option value="car">Car</option>
+        <option value="both">Bike + Car</option>
+    </select>
+
+    <div class="fuelHeader">
+        <span>Vehicle</span>
+        <span>KM / day</span>
+        <span>Mileage</span>
+        <span>Action</span>
+    </div>
+
+    <div id="fuelRows"></div>
+
+    <button onclick="addFuelRow()">Add vehicle</button>
+    <button onclick="showSection('electricityBox')">Back</button>
+    <button onclick="calculateFuel(); showSection('waterBox')">Next</button>
+</div>
+<!-- =============================================== -->
+
+<!-- WATER -->
+<div class="box" id="waterBox">
+    <h2>Water Usage</h2>
+
+    <label>Number of Family Members</label>
+    <input type="number" id="waterMembers">
+
+    <label>Source of Water</label>
+    <select id="waterSource">
+        <option value="">-- Select --</option>
+        <option value="municipal">Municipal</option>
+        <option value="borewell">Borewell</option>
+        <option value="private">Private</option>
+    </select>
+
+    <label>Water Consumed (liters/day)</label>
+    <input type="number" id="waterUsed">
+
+    <button onclick="showSection('fuelBox')">Back</button>
+    <button onclick="finishCalculation()">Finish</button>
+</div>
+
+<!-- RESULT -->
+<div class="box" id="finishBox">
+    <h2>Results</h2>
+    <div id="summary"></div>
+    <canvas id="circleScore" width="200" height="220"></canvas>
+</div>
+
+<script>
+function showSection(id){
+    document.querySelectorAll('.box').forEach(b => b.style.display='none');
+    document.getElementById(id).style.display='block';
+}
+
+let electricityKwhTotal = 0;
+let totalFuelLitres = 0;
+let waterUsedLitres = 0;
+let members = 1;
+
+function calculateElectricity(){
+    members = Number(document.getElementById("members").value) || 1;
+
+    electricityKwhTotal =
+        fans.value * 70 * 12 / 1000 +
+        led.value * 12 * 6 / 1000 +
+        nonled.value * 60 * 6 / 1000 +
+        fridge.value * 200 / 1000 +
+        ac.value * 1500 / 1000 +
+        tv.value * 100 / 1000 +
+        wm.value * 500 / 1000 +
+        heater.value * 3000 / 1000 +
+        evPower.value * 5000 / 1000;
+}
+
+/* ========= FUEL LOGIC (FINAL FIX) ========= */
+function addFuelRow(){
+    const type = vehicleType.value;
+    if(!type){
+        alert("Select vehicle category first");
+        return;
+    }
+
+    let vehicleField = "";
+
+    if(type === "bike"){
+        vehicleField = `<input type="text" value="Bike" readonly>`;
+    }
+    else if(type === "car"){
+        vehicleField = `<input type="text" value="Car" readonly>`;
+    }
+    else {
+        vehicleField = `
+            <select class="vType">
+                <option value="">Select</option>
+                <option>Bike</option>
+                <option>Car</option>
+            </select>
+        `;
+    }
+
+    const row = document.createElement("div");
+    row.className = "fuelRow";
+    row.innerHTML = `
+        ${vehicleField}
+        <input type="number" class="km" placeholder="KM / day">
+        <input type="number" class="mileage" placeholder="Mileage">
+        <button onclick="this.parentElement.remove()">Remove</button>
+    `;
+    fuelRows.appendChild(row);
+}
+
+function calculateFuel(){
+    totalFuelLitres = 0;
+
+    document.querySelectorAll(".fuelRow").forEach(row=>{
+        const km = Number(row.querySelector(".km").value);
+        const mileage = Number(row.querySelector(".mileage").value);
+
+        if(km>0 && mileage>0){
+            totalFuelLitres += km / mileage;
+        }
+    });
+}
+/* ======================================== */
+
+function finishCalculation(){
+    waterUsedLitres = Number(waterUsed.value) || 0;
+
+    let fuelCO2 = totalFuelLitres * 2.31;
+    let eleCO2 = electricityKwhTotal * 0.85;
+    let waterCO2 = waterUsedLitres * 0.0003;
+
+    let totalCO2 = fuelCO2 + eleCO2 + waterCO2;
+    let perPersonCO2 = totalCO2 / members;
+    let score = Math.max(0,100-totalCO2*3);
+
+    summary.innerHTML = `
+    <b>Daily:</b> Electricity ${electricityKwhTotal.toFixed(2)} kWh |
+    Fuel ${totalFuelLitres.toFixed(2)} L |
+    Water ${waterUsedLitres} L <br>
+    <b>CO₂:</b> ${totalCO2.toFixed(2)} kg/day |
+    Per Person ${perPersonCO2.toFixed(2)} kg/day
+    `;
+
+    showSection("finishBox");
+    drawCircleScore(score);
+}
+
+function drawCircleScore(p){
+    let c=circleScore.getContext("2d");
+    c.clearRect(0,0,200,220);
+
+    c.beginPath();
+    c.arc(100,100,80,0,2*Math.PI);
+    c.strokeStyle="#ddd";
+    c.lineWidth=15;
+    c.stroke();
+
+    c.beginPath();
+    c.arc(100,100,80,-Math.PI/2,(p/100)*2*Math.PI-Math.PI/2);
+    c.strokeStyle=p>66?"#0f9d58":p>33?"#f4b400":"#db4437";
+    c.lineWidth=15;
+    c.stroke();
+
+    c.font="24px Times New Roman";
+    c.textAlign="center";
+    c.fillText(Math.round(p)+"%",100,105);
+}
+</script>
+
+</body>
+</html>
