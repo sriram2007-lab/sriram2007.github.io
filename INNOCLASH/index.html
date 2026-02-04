@@ -15,6 +15,29 @@
 
         .box { display: none; }
         #startBox { display: flex; flex-direction: column; justify-content: center; align-items: center; }
+
+        /* ===== UPDATED FUEL TABLE LAYOUT ===== */
+        .fuelHeader, .fuelRow{
+            display:grid;
+            grid-template-columns: 1.5fr 2fr 2fr auto;
+            gap:14px;
+            align-items:center;
+            margin-top:12px;
+        }
+
+        #fuelBox input,
+        #fuelBox select {
+            padding: 14px;
+            font-size: 16px;
+            border-radius: 10px;
+        }
+
+        .fuelRow button {
+            padding: 12px 18px;
+            font-size: 14px;
+            border-radius: 10px;
+            cursor: pointer;
+        }
     </style>
 </head>
 
@@ -66,35 +89,32 @@
     <button onclick="calculateElectricity(); showSection('fuelBox')">Next</button>
 </div>
 
-<!-- FUEL -->
+<!-- ================= FUEL (FIXED) ================= -->
 <div class="box" id="fuelBox">
     <h2>Fuel Consumption</h2>
 
-    <label>Select Vehicle Type</label>
-    <select id="vehicleType" onchange="toggleFuelOptions()">
+    <label>Select Vehicle Category</label>
+    <select id="vehicleType">
         <option value="">-- Select --</option>
         <option value="bike">Bike</option>
         <option value="car">Car</option>
         <option value="both">Bike + Car</option>
     </select>
 
-    <div id="bikeBox" style="display:none;">
-        <label>Number of Bikes</label>
-        <input type="number" id="numBikes">
-        <div id="bikeInputs"></div>
-        <button onclick="addBikeInputs()">Add Bike Details</button>
+    <div class="fuelHeader">
+        <span>Vehicle</span>
+        <span>KM / day</span>
+        <span>Mileage</span>
+        <span>Action</span>
     </div>
 
-    <div id="carBox" style="display:none;">
-        <label>Number of Cars</label>
-        <input type="number" id="numCars">
-        <div id="carInputs"></div>
-        <button onclick="addCarInputs()">Add Car Details</button>
-    </div>
+    <div id="fuelRows"></div>
 
+    <button onclick="addFuelRow()">Add vehicle</button>
     <button onclick="showSection('electricityBox')">Back</button>
     <button onclick="calculateFuel(); showSection('waterBox')">Next</button>
 </div>
+<!-- =============================================== -->
 
 <!-- WATER -->
 <div class="box" id="waterBox">
@@ -131,12 +151,6 @@ function showSection(id){
     document.getElementById(id).style.display='block';
 }
 
-function toggleFuelOptions(){
-    let type = vehicleType.value;
-    bikeBox.style.display = (type==="bike"||type==="both")?"block":"none";
-    carBox.style.display = (type==="car"||type==="both")?"block":"none";
-}
-
 let electricityKwhTotal = 0;
 let totalFuelLitres = 0;
 let waterUsedLitres = 0;
@@ -157,59 +171,56 @@ function calculateElectricity(){
         evPower.value * 5000 / 1000;
 }
 
-function addBikeInputs(){
-    bikeInputs.innerHTML="";
-    for(let i=1;i<=numBikes.value;i++){
-        bikeInputs.innerHTML+=`
-        <label>Bike ${i} KM/day</label>
-        <input class="bikeKm">
-        <label>Mileage</label>
-        <input class="bikeMileage">
+/* ========= FUEL LOGIC (FINAL FIX) ========= */
+function addFuelRow(){
+    const type = vehicleType.value;
+    if(!type){
+        alert("Select vehicle category first");
+        return;
+    }
+
+    let vehicleField = "";
+
+    if(type === "bike"){
+        vehicleField = `<input type="text" value="Bike" readonly>`;
+    }
+    else if(type === "car"){
+        vehicleField = `<input type="text" value="Car" readonly>`;
+    }
+    else {
+        vehicleField = `
+            <select class="vType">
+                <option value="">Select</option>
+                <option>Bike</option>
+                <option>Car</option>
+            </select>
         `;
     }
+
+    const row = document.createElement("div");
+    row.className = "fuelRow";
+    row.innerHTML = `
+        ${vehicleField}
+        <input type="number" class="km" placeholder="KM / day">
+        <input type="number" class="mileage" placeholder="Mileage">
+        <button onclick="this.parentElement.remove()">Remove</button>
+    `;
+    fuelRows.appendChild(row);
 }
 
-function addCarInputs(){
-    carInputs.innerHTML="";
-    for(let i=1;i<=numCars.value;i++){
-        carInputs.innerHTML+=`
-        <label>Car ${i} KM/day</label>
-        <input class="carKm">
-        <label>Mileage</label>
-        <input class="carMileage">
-        `;
-    }
-}
-
-/* ✅ ROBUST FUEL CALCULATION */
 function calculateFuel(){
     totalFuelLitres = 0;
 
-    const MAX_KM_PER_DAY = 1000;
-    const MIN_MILEAGE = 3;
-    const MAX_TOTAL_FUEL = 200;
+    document.querySelectorAll(".fuelRow").forEach(row=>{
+        const km = Number(row.querySelector(".km").value);
+        const mileage = Number(row.querySelector(".mileage").value);
 
-    document.querySelectorAll(".bikeKm").forEach((k,i)=>{
-        let km = Number(k.value);
-        let mileage = Number(document.querySelectorAll(".bikeMileage")[i].value);
-
-        if(Number.isFinite(km) && Number.isFinite(mileage) && km>0 && mileage>=MIN_MILEAGE){
-            totalFuelLitres += Math.min(km, MAX_KM_PER_DAY) / mileage;
+        if(km>0 && mileage>0){
+            totalFuelLitres += km / mileage;
         }
     });
-
-    document.querySelectorAll(".carKm").forEach((k,i)=>{
-        let km = Number(k.value);
-        let mileage = Number(document.querySelectorAll(".carMileage")[i].value);
-
-        if(Number.isFinite(km) && Number.isFinite(mileage) && km>0 && mileage>=MIN_MILEAGE){
-            totalFuelLitres += Math.min(km, MAX_KM_PER_DAY) / mileage;
-        }
-    });
-
-    if(!Number.isFinite(totalFuelLitres)) totalFuelLitres = MAX_TOTAL_FUEL;
-    totalFuelLitres = Math.min(totalFuelLitres, MAX_TOTAL_FUEL);
 }
+/* ======================================== */
 
 function finishCalculation(){
     waterUsedLitres = Number(waterUsed.value) || 0;
