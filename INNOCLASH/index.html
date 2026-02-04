@@ -12,6 +12,7 @@
             background-repeat: no-repeat;
             background-attachment: fixed;
         }
+
         .box { display: none; }
         #startBox { display: flex; flex-direction: column; justify-content: center; align-items: center; }
     </style>
@@ -21,11 +22,13 @@
 
 <h1>Family Energy & Carbon Calculator</h1>
 
+<!-- START -->
 <div class="box" id="startBox">
     <p>Small acts, when multiplied by millions of people, can transform the world.</p>
     <button onclick="showSection('electricityBox')">Start Calculation</button>
 </div>
 
+<!-- ELECTRICITY -->
 <div class="box" id="electricityBox">
     <h2>Electricity Usage</h2>
 
@@ -63,6 +66,7 @@
     <button onclick="calculateElectricity(); showSection('fuelBox')">Next</button>
 </div>
 
+<!-- FUEL -->
 <div class="box" id="fuelBox">
     <h2>Fuel Consumption</h2>
 
@@ -75,14 +79,14 @@
     </select>
 
     <div id="bikeBox" style="display:none;">
-        <label>Number of Bikes (max 10)</label>
+        <label>Number of Bikes</label>
         <input type="number" id="numBikes">
         <div id="bikeInputs"></div>
         <button onclick="addBikeInputs()">Add Bike Details</button>
     </div>
 
     <div id="carBox" style="display:none;">
-        <label>Number of Cars (max 10)</label>
+        <label>Number of Cars</label>
         <input type="number" id="numCars">
         <div id="carInputs"></div>
         <button onclick="addCarInputs()">Add Car Details</button>
@@ -92,8 +96,20 @@
     <button onclick="calculateFuel(); showSection('waterBox')">Next</button>
 </div>
 
+<!-- WATER -->
 <div class="box" id="waterBox">
     <h2>Water Usage</h2>
+
+    <label>Number of Family Members</label>
+    <input type="number" id="waterMembers">
+
+    <label>Source of Water</label>
+    <select id="waterSource">
+        <option value="">-- Select --</option>
+        <option value="municipal">Municipal</option>
+        <option value="borewell">Borewell</option>
+        <option value="private">Private</option>
+    </select>
 
     <label>Water Consumed (liters/day)</label>
     <input type="number" id="waterUsed">
@@ -102,6 +118,7 @@
     <button onclick="finishCalculation()">Finish</button>
 </div>
 
+<!-- RESULT -->
 <div class="box" id="finishBox">
     <h2>Results</h2>
     <div id="summary"></div>
@@ -126,68 +143,76 @@ let waterUsedLitres = 0;
 let members = 1;
 
 function calculateElectricity(){
-    members = parseFloat(members.value) || 1;
+    members = Number(document.getElementById("members").value) || 1;
 
     electricityKwhTotal =
-        (fans.value || 0) * 70 * 12 / 1000 +
-        (led.value || 0) * 12 * 6 / 1000 +
-        (nonled.value || 0) * 60 * 6 / 1000 +
-        (fridge.value || 0) * 200 / 1000 +
-        (ac.value || 0) * 1500 / 1000 +
-        (tv.value || 0) * 100 / 1000 +
-        (wm.value || 0) * 500 / 1000 +
-        (heater.value || 0) * 3000 / 1000 +
-        (evPower.value || 0);
+        fans.value * 70 * 12 / 1000 +
+        led.value * 12 * 6 / 1000 +
+        nonled.value * 60 * 6 / 1000 +
+        fridge.value * 200 / 1000 +
+        ac.value * 1500 / 1000 +
+        tv.value * 100 / 1000 +
+        wm.value * 500 / 1000 +
+        heater.value * 3000 / 1000 +
+        evPower.value * 5000 / 1000;
 }
 
 function addBikeInputs(){
-    if(numBikes.value > 10) return alert("Max 10 bikes allowed");
     bikeInputs.innerHTML="";
     for(let i=1;i<=numBikes.value;i++){
         bikeInputs.innerHTML+=`
         <label>Bike ${i} KM/day</label>
-        <input class="bikeKm" type="number">
+        <input class="bikeKm">
         <label>Mileage</label>
-        <input class="bikeMileage" type="number">
+        <input class="bikeMileage">
         `;
     }
 }
 
 function addCarInputs(){
-    if(numCars.value > 10) return alert("Max 10 cars allowed");
     carInputs.innerHTML="";
     for(let i=1;i<=numCars.value;i++){
         carInputs.innerHTML+=`
         <label>Car ${i} KM/day</label>
-        <input class="carKm" type="number">
+        <input class="carKm">
         <label>Mileage</label>
-        <input class="carMileage" type="number">
+        <input class="carMileage">
         `;
     }
 }
 
+/* ✅ ROBUST FUEL CALCULATION */
 function calculateFuel(){
     totalFuelLitres = 0;
 
+    const MAX_KM_PER_DAY = 1000;
+    const MIN_MILEAGE = 3;
+    const MAX_TOTAL_FUEL = 200;
+
     document.querySelectorAll(".bikeKm").forEach((k,i)=>{
-        let km = parseFloat(k.value);
-        let mileage = parseFloat(document.querySelectorAll(".bikeMileage")[i].value);
-        if(km>0 && mileage>5 && km<=500){
-            totalFuelLitres += km / mileage;
+        let km = Number(k.value);
+        let mileage = Number(document.querySelectorAll(".bikeMileage")[i].value);
+
+        if(Number.isFinite(km) && Number.isFinite(mileage) && km>0 && mileage>=MIN_MILEAGE){
+            totalFuelLitres += Math.min(km, MAX_KM_PER_DAY) / mileage;
         }
     });
 
     document.querySelectorAll(".carKm").forEach((k,i)=>{
-        let km = parseFloat(k.value);
-        let mileage = parseFloat(document.querySelectorAll(".carMileage")[i].value);
-        if(km>0 && mileage>5 && km<=500){
-            totalFuelLitres += km / mileage;
+        let km = Number(k.value);
+        let mileage = Number(document.querySelectorAll(".carMileage")[i].value);
+
+        if(Number.isFinite(km) && Number.isFinite(mileage) && km>0 && mileage>=MIN_MILEAGE){
+            totalFuelLitres += Math.min(km, MAX_KM_PER_DAY) / mileage;
         }
     });
+
+    if(!Number.isFinite(totalFuelLitres)) totalFuelLitres = MAX_TOTAL_FUEL;
+    totalFuelLitres = Math.min(totalFuelLitres, MAX_TOTAL_FUEL);
 }
 
 function finishCalculation(){
-    waterUsedLitres = parseFloat(waterUsed.value) || 0;
+    waterUsedLitres = Number(waterUsed.value) || 0;
 
     let fuelCO2 = totalFuelLitres * 2.31;
     let eleCO2 = electricityKwhTotal * 0.85;
@@ -195,14 +220,12 @@ function finishCalculation(){
 
     let totalCO2 = fuelCO2 + eleCO2 + waterCO2;
     let perPersonCO2 = totalCO2 / members;
-
-    let score = 100 - Math.log(totalCO2 + 1) * 25;
-    score = Math.min(100, Math.max(0, score));
+    let score = Math.max(0,100-totalCO2*3);
 
     summary.innerHTML = `
     <b>Daily:</b> Electricity ${electricityKwhTotal.toFixed(2)} kWh |
     Fuel ${totalFuelLitres.toFixed(2)} L |
-    Water ${waterUsedLitres} L<br>
+    Water ${waterUsedLitres} L <br>
     <b>CO₂:</b> ${totalCO2.toFixed(2)} kg/day |
     Per Person ${perPersonCO2.toFixed(2)} kg/day
     `;
@@ -212,8 +235,7 @@ function finishCalculation(){
 }
 
 function drawCircleScore(p){
-    p = Math.min(100, Math.max(0, p));
-    let c = circleScore.getContext("2d");
+    let c=circleScore.getContext("2d");
     c.clearRect(0,0,200,220);
 
     c.beginPath();
